@@ -137,9 +137,18 @@ def test_transposed_convolution(inputs, kernels, strides, padding,
     # Torch
     inputs_torch = torch.from_numpy(inputs)
     kernels_torch = torch.from_numpy(kernels)
-    outputs_torch = torch.nn.functional.conv_transpose2d(
-        inputs_torch, kernels_torch, stride=strides, padding=padding)
-    outputs_torch = outputs_torch.numpy()
+    conv_transposed2d_obj = torch.nn.ConvTranspose2d(
+        in_channels=kernels.shape[0], 
+        out_channels=kernels.shape[1], 
+        kernel_size=kernels.shape[:2], 
+        stride=strides, 
+        padding=padding, 
+        output_padding=0, 
+        bias=False
+    )
+    conv_transposed2d_obj.weight = torch.nn.Parameter(kernels_torch)
+    outputs_torch = conv_transposed2d_obj(inputs_torch)
+    outputs_torch = outputs_torch.detach().numpy()
 
     # Numpy
     outputs_numpy = numpy_conv2d_transpose(
