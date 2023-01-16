@@ -97,42 +97,31 @@ def test_transposed_convolution(inputs, kernels, strides, padding,
         outputs_shape[0], outputs_shape[2], 
         outputs_shape[3], outputs_shape[1])
     
-    # outputs_tensorflow = tf.nn.conv2d_transpose(
-    #     inputs_tf, kernels_tf, strides=strides, output_shape=outputs_shape_tf, 
-    #     padding='VALID')
-    # outputs_tensorflow = outputs_tensorflow.numpy()
-    # outputs_tensorflow = outputs_tensorflow.transpose(0,3,1,2)
-    
     kwargs = dict(
         filters=kernels_tf.shape[2],
         kernel_size=kernels_tf.shape[:2],
         strides=strides,
         use_bias=False,
+        output_padding=output_padding,
     )
     
-    outputs_tensorflow1 = tf.keras.layers.Conv2DTranspose(
+    conv2d_transpose_obj1 = tf.keras.layers.Conv2DTranspose(
         padding='valid',
-        output_padding=None,
-        **kwargs
-    )(inputs_tf).numpy().transpose(0,3,1,2)
+        **kwargs,
+    )
+    _ = conv2d_transpose_obj1(inputs_tf)
+    conv2d_transpose_obj1.set_weights([kernels_tf])
+    outputs_tensorflow1 = conv2d_transpose_obj1(inputs_tf)
+    outputs_tensorflow1 = outputs_tensorflow1.numpy().transpose(0,3,1,2)
     
-    outputs_tensorflow2 = tf.keras.layers.Conv2DTranspose(
+    conv2d_transpose_obj2 = tf.keras.layers.Conv2DTranspose(
         padding='same',
-        output_padding=None,
-        **kwargs
-    )(inputs_tf).numpy().transpose(0,3,1,2)
-    
-    outputs_tensorflow3 = tf.keras.layers.Conv2DTranspose(
-        padding='valid',
-        output_padding=0,
-        **kwargs
-    )(inputs_tf).numpy().transpose(0,3,1,2)
-    
-    outputs_tensorflow4 = tf.keras.layers.Conv2DTranspose(
-        padding='same',
-        output_padding=0,
-        **kwargs
-    )(inputs_tf).numpy().transpose(0,3,1,2)
+        **kwargs,
+    )
+    _ = conv2d_transpose_obj2(inputs_tf)
+    conv2d_transpose_obj2.set_weights([kernels_tf])
+    outputs_tensorflow2 = conv2d_transpose_obj2(inputs_tf)
+    outputs_tensorflow2 = outputs_tensorflow2.numpy().transpose(0,3,1,2)
     
     # Torch
     inputs_torch = torch.from_numpy(inputs)
@@ -163,21 +152,15 @@ def test_transposed_convolution(inputs, kernels, strides, padding,
     print('PyTorch:', outputs_torch.shape)
     
     print('\nVarious Tensorflow Output Shapes:')
-    print('padding=\'valid\' output_padding=None', outputs_tensorflow1.shape)
-    print('padding=\'same\'  output_padding=None', outputs_tensorflow2.shape)
-    print('padding=\'valid\' output_padding=0   ', outputs_tensorflow3.shape)
-    print('padding=\'same\'  output_padding=0   ', outputs_tensorflow4.shape)
+    print('padding=\'valid\'', outputs_tensorflow1.shape)
+    print('padding=\'same\' ', outputs_tensorflow2.shape)
     
     if print_arrays:
         print('\n\nTorch')
         print(outputs_torch)
         print('\n\nNumpy')
         print(outputs_numpy)
-        print('\n\nTensorflow: padding=\'valid\' output_padding=None')
+        print('\n\nTensorflow: padding=\'valid\'')
         print(outputs_tensorflow1)
-        print('\n\nTensorflow: padding=\'same\'  output_padding=None')
+        print('\n\nTensorflow: padding=\'same\' ')
         print(outputs_tensorflow2)
-        print('\n\nTensorflow: padding=\'valid\' output_padding=0   ')
-        print(outputs_tensorflow3)
-        print('\n\nTensorflow: padding=\'same\'  output_padding=0   ')
-        print(outputs_tensorflow4)
