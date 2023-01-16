@@ -10,7 +10,7 @@ def numpy_conv2d(inputs, kernels, strides, padding, return_kernel=False):
         kernels: A `numpy.ndarray` of shape (number of kernels, 
             number of channels, height, width). The number of channels 
             of `kernels` must match with that of `inputs`.
-        strides: A positive `int`.
+        strides: A tuple of two positive `int`.
         padding: A non-negative `int`.
         return_kernel: A `bool`. If `True`, return the unrolled kernel
             and the convoluted outputs, otherwise, return only the 
@@ -44,7 +44,7 @@ def numpy_conv2d_transpose(inputs, kernels, strides, outputs_shape, padding,
         kernels: A `numpy.ndarray` of shape (number of channels, number 
             of kernels, height, width). The number of channels of
             `kernels` must match with that of `inputs`.
-        strides: A positive `int`.
+        strides: A tuple of two positive `int`.
         outputs_shape: A `numpy.ndarray` of shape (number of samples, 
             number of channels, height, width). It is computed by 
             `compute_outputs_shape()`.
@@ -122,7 +122,7 @@ def _stride(inputs, strides, mode, output_padding=None):
     Args:
         inputs: A `numpy.ndarray` of shape (number of samples, number of
             channels, height, width).
-        strides: A positive `int`.
+        strides: A tuple of two positive `int`.
         output_padding: A non-negative `int` for specifying how many 
             additional rows and columns are added to one side of the 
             output. Only valid when `mode=='transposed'`.
@@ -131,17 +131,17 @@ def _stride(inputs, strides, mode, output_padding=None):
     Returns:
         outputs: A `numpy.ndarray`. Expanded or shrinked.
     '''
-    s = strides
+    sh, sw = strides
     m, c, h, w = inputs.shape
     
     if mode == 'normal': # get every other N rows/columns
-        outputs = inputs[:,:,::s,::s]
+        outputs = inputs[:,:,::sh,::sw]
         
     elif mode == 'transposed': # add N rows/columns of 0 between two rows/columns
-        _h = h + (h - 1) * (s - 1) + output_padding
-        _w = w + (w - 1) * (s - 1) + output_padding
+        _h = h + (h - 1) * (sh - 1) + output_padding
+        _w = w + (w - 1) * (sw - 1) + output_padding
         outputs = np.zeros((m,c,_h,_w), dtype=np.float32)
-        outputs[:,:,::s,::s] = inputs
+        outputs[:,:,::sh,::sw] = inputs
         
     return outputs
 
@@ -226,7 +226,7 @@ def compute_outputs_shape(inputs, kernels, strides, mode, output_padding=None):
             number of channels, number of kernels, height, width). The 
             number of channels of `kernels` must match with that of 
             `inputs`.
-        strides: A positive `int`.
+        strides: A tuple of two positive `int`.
         mode: A `str`. Either 'normal' or 'tranposed'
         output_padding: A non-negative `int` for specifying how many 
             additional rows and columns are added to one side of the 
@@ -235,6 +235,7 @@ def compute_outputs_shape(inputs, kernels, strides, mode, output_padding=None):
     Returns:
         outputs: A `numpy.ndarray`. Output shape.
     '''
+    sh, sw = strides
     im, ic, ih, iw = inputs.shape
     kn, kc, kh, kw = kernels.shape
     
@@ -249,7 +250,7 @@ def compute_outputs_shape(inputs, kernels, strides, mode, output_padding=None):
         outputs_shape = (
             im, 
             kc,
-            (ih - 1) * strides + kh + output_padding,
-            (iw - 1) * strides + kw + output_padding)
+            (ih - 1) * sh + kh + output_padding,
+            (iw - 1) * sw + kw + output_padding)
 
     return outputs_shape

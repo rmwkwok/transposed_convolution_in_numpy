@@ -76,7 +76,7 @@ def test_transposed_convolution(inputs, kernels, strides, padding,
         kernels: A `numpy.ndarray` of shape (number of channels, number 
             of kernels, height, width). The number of channels of
             `kernels` must match with that of `inputs`.
-        strides: A positive `int` 
+        strides: A tuple of two positive `int`.
         padding: A non-negative `int` for Torch and Numpy 
             implementations only. Tensorflow does not use padding
         print_arrays: A `bool`. If `True`, print the convolution-
