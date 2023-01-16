@@ -64,8 +64,8 @@ def test_normal_convolution(inputs, kernels, strides, print_arrays=False):
         print('\n\nNumpy')
         print(outputs_numpy)
         
-def test_transposed_convolution(inputs, kernels, strides, padding, 
-                                print_arrays=False):
+def test_transposed_convolution(inputs, kernels, strides, padding,
+                                output_padding, print_arrays=False):
     '''
     Test Transposed Convolution, and compare results with Tensorflow's
     and Torch's implementation.
@@ -88,7 +88,7 @@ def test_transposed_convolution(inputs, kernels, strides, padding,
     print('Transposed Convolution tests\n')
     
     outputs_shape = compute_outputs_shape(inputs, kernels, strides, 
-                                         mode='transposed')
+                                          'transposed', output_padding)
     
     # Tensorflow
     inputs_tf = inputs.transpose(0,2,3,1)
@@ -143,7 +143,7 @@ def test_transposed_convolution(inputs, kernels, strides, padding,
         kernel_size=kernels.shape[:2], 
         stride=strides, 
         padding=padding, 
-        output_padding=0, 
+        output_padding=output_padding, 
         bias=False
     )
     conv_transposed2d_obj.weight = torch.nn.Parameter(kernels_torch)
@@ -152,7 +152,7 @@ def test_transposed_convolution(inputs, kernels, strides, padding,
 
     # Numpy
     outputs_numpy = numpy_conv2d_transpose(
-        inputs, kernels, strides, outputs_shape, padding)
+        inputs, kernels, strides, outputs_shape, padding, output_padding)
     
     print('AllClose Check: Torch vs Numpy:',
           'Passed' if np.allclose(outputs_torch, outputs_numpy)\

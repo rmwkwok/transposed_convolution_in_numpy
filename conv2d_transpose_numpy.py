@@ -34,7 +34,7 @@ def numpy_conv2d(inputs, kernels, strides, padding, return_kernel=False):
     return outputs
 
 def numpy_conv2d_transpose(inputs, kernels, strides, outputs_shape, padding, 
-                           return_kernel=False):
+                           output_padding, return_kernel=False):
     '''
     Transposed convolute `inputs` with `kernels`.
     
@@ -56,7 +56,7 @@ def numpy_conv2d_transpose(inputs, kernels, strides, outputs_shape, padding,
     Returns:
         outputs: A `numpy.ndarray`. The convoluted outputs.
     '''
-    _inputs = _stride(inputs, strides, 'transposed')
+    _inputs = _stride(inputs, strides, 'transposed', output_padding)
     _kernels = _unroll_kernel(_inputs, kernels, outputs_shape, 'transposed')
 
     _inputs = _flatten(_inputs)
@@ -112,7 +112,7 @@ def _flatten(inputs):
     m, c, h, w = inputs.shape
     return inputs.reshape((m, c, -1))
 
-def _stride(inputs, strides, mode):
+def _stride(inputs, strides, mode, output_padding=None):
     '''
     If `mode=='normal'`, keep an element of `inputs`every `strides` step
     along both height and width axes. This shrinks `inputs`. If 
@@ -123,6 +123,9 @@ def _stride(inputs, strides, mode):
         inputs: A `numpy.ndarray` of shape (number of samples, number of
             channels, height, width).
         strides: A positive `int`.
+        output_padding: A non-negative `int` for specifying how many 
+            additional rows and columns are added to one side of the 
+            output. Only valid when `mode=='transposed'`.
         mode: A `str`. Either 'normal' or 'tranposed'.
         
     Returns:
@@ -135,8 +138,8 @@ def _stride(inputs, strides, mode):
         outputs = inputs[:,:,::s,::s]
         
     elif mode == 'transposed': # add N rows/columns of 0 between two rows/columns
-        _h = h + (h - 1) * (s - 1)
-        _w = w + (w - 1) * (s - 1)
+        _h = h + (h - 1) * (s - 1) + output_padding
+        _w = w + (w - 1) * (s - 1) + output_padding
         outputs = np.zeros((m,c,_h,_w), dtype=np.float32)
         outputs[:,:,::s,::s] = inputs
         
@@ -210,7 +213,7 @@ def _unroll_kernel(inputs, kernels, outputs_shape, mode):
         
     return outputs
 
-def compute_outputs_shape(inputs, kernels, strides, mode):
+def compute_outputs_shape(inputs, kernels, strides, mode, output_padding=None):
     '''
     Compute the output shape of the normal/transposed convolution.
     
@@ -225,6 +228,9 @@ def compute_outputs_shape(inputs, kernels, strides, mode):
             `inputs`.
         strides: A positive `int`.
         mode: A `str`. Either 'normal' or 'tranposed'
+        output_padding: A non-negative `int` for specifying how many 
+            additional rows and columns are added to one side of the 
+            output. Only valid when `mode=='transposed'`.
         
     Returns:
         outputs: A `numpy.ndarray`. Output shape.
@@ -243,7 +249,7 @@ def compute_outputs_shape(inputs, kernels, strides, mode):
         outputs_shape = (
             im, 
             kc,
-            (ih - 1) * strides + kh, 
-            (iw - 1) * strides + kw)
+            (ih - 1) * strides + kh + output_padding,
+            (iw - 1) * strides + kw + output_padding)
 
     return outputs_shape
